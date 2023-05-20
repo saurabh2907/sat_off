@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mark Your Saturday Off Here...</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.8/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+  </style>
+  <body>
+</head>
+<h1>Mark Your Saturday Off Here..</h1>
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <span class="alert-icon"><i class="ni ni-like-2"></i></span>
+            <span class="alert-text"><strong>Warning!</strong>{{ message }} </span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+        {% endif %}
+  <form action="leave_applications" method="POST" id="leave-form">
+    {% csrf_token %}
+    <label for="employee-name">Employee Name:</label>
+      <select id="employee-name" name="employee_name">
+        <option value="">--Select Employee--</option>
+        <option value="Mr.Shantanu">19781 Mr.Shantanu</option>
+        <option value="Mr.Shreyash">18700 Mr.Shreyash</option>
+        <option value="Mr.Chetan">17779 Mr.Chetan</option>
+        <option value="Mr.Ajinkya">19697 Mr.Ajinkya</option>
+        <option value="Mr.Akashay">18699 Mr.Akashay</option>
+        <option value="Mr.Prafulla">18002 Mr.Prafulla</option>
+        <option value="Mr.Pruthviraj">19847 Mr.Pruthviraj</option>
+        <option value="Mr.Saurabh">18640 Mr.Saurabh</option>
+        <option value="Mr.Khushal">18789 Mr.Khushal</option>
+        <option value="Mrs.Varsha">19904 Mrs.Varsha</option>
+        <!-- Add more employee names as needed -->
+      </select>
+
+    <label for="leave-type">Leave Type:</label>
+    <select id="leave-type" name="leave_type">
+      <option value="">--Select Leave Type--</option>
+      <option value="Saturday Off" selected>Saturday Off</option>
+      <option value="Annual Leave">Annual Leave</option>
+      <option value="Sick Leave">Sick Leave</option>
+      <option value="Personal Leave">Personal Leave</option>
+    </select>
+
+    <label for="leave-start-date">Leave Start Date:</label>
+    <input type="date" id="leave-start-date" name="leave_start_date">
+
+    <label for="leave-end-date">Leave End Date:</label>
+    <input type="date" id="leave-end-date" name="leave_end_date">
+
+    <label for="reason-for-leave">Reason for Leave:</label>
+    <textarea id="reason-for-leave" name="reason_for_leave" rows="5"></textarea>
+
+    <button type="submit" class="btn btn-primary">Apply</button>
+  </form>
+
+  <table id="employee-table">
+    <thead>
+      <tr>
+         <th>Sr No</th>
+        <th>Employee Name</th>
+        <th>Leave Type</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Reason for Leave</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+     {% for i in leaves %}
+
+      <tr>
+           {% csrf_token %}
+          <td>{{forloop.counter}}</td>
+          <td>{{ i.employee_name}}</td>
+          <td>{{ i.leave_type}}</td>
+          <td>{{ i.start_date}}</td>
+          <td>{{ i.end_date}}</td>
+          <td>{{ i.reason_for_leave}}</td>
+          <td>
+              <form action="remove_entry" method="POST">
+                  {% csrf_token %}
+                  <input type="hidden" value={{i.id}} name="entry_id" />
+                <button class="btn-remove" type="submit">Remove</button>
+            </form>
+          </td>
+      </tr>
+     {% endfor%}
+    </tbody>
+
+  </table>
+
+<button class="btn-export" onclick="exportToExcel()">Export to Excel</button>
+
+
+<!--  <script>-->
+<!--    let employeeData = [];-->
+<!--    let editIndex = -1;-->
+
+<!--    document.getElementById('leave-form').addEventListener('submit', function(e) {-->
+<!--      e.preventDefault();-->
+<!--      handleSubmit();-->
+<!--    });-->
+
+<!--    document.getElementById('update-btn').addEventListener('click', function() {-->
+<!--      updateEntry();-->
+<!--    });-->
+
+<!--    document.getElementById('export-btn').addEventListener('click', function() {-->
+<!--      exportToExcel();-->
+<!--    });-->
+
+<!--    document.addEventListener('DOMContentLoaded', function() {-->
+<!--      if (localStorage.getItem('employeeData')) {-->
+<!--        employeeData = JSON.parse(localStorage.getItem('employeeData'));-->
+<!--        updateTable();-->
+<!--      }-->
+<!--    });-->
+
+<!--    function handleSubmit() {-->
+<!--      const employee_name = document.getElementById('employee-name').value;-->
+<!--      const leave_type = document.getElementById('leave-type').value;-->
+<!--      const start_date = document.getElementById('leave-start-date').value;-->
+<!--      const end_date = document.getElementById('leave-end-date').value;-->
+<!--      const reason_for_leave = document.getElementById('reason-for-leave').value;-->
+
+<!--      if (editIndex === -1) {-->
+<!--        // Add new entry-->
+<!--        const employee = {-->
+<!--          'Employee Name': employee_name,-->
+<!--          'Leave Type': leave_type,-->
+<!--          'Start Date': start_date,-->
+<!--          'End Date': end_date,-->
+<!--          'Reason for Leave': reason_for_leave-->
+<!--        };-->
+<!--        employeeData.push(employee);-->
+<!--      } else {-->
+<!--        // Update existing entry-->
+<!--        employeeData[editIndex] = {-->
+<!--          'Employee Name': employee_name,-->
+<!--          'Leave Type': leave_type,-->
+<!--          'Start Date': start_date,-->
+<!--          'End Date': end_date,-->
+<!--          'Reason for Leave': reason_for_leave-->
+<!--        };-->
+<!--        editIndex = -1;-->
+<!--        document.getElementById('submit-btn').style.display = 'block';-->
+<!--        document.getElementById('update-btn').style.display = 'none';-->
+<!--      }-->
+
+<!--      updateTable();-->
+<!--      clearForm();-->
+<!--      saveDataToLocalStorage();-->
+<!--    }-->
+
+<!--    function updateEntry() {-->
+<!--      const employee_name = document.getElementById('employee-name').value;-->
+<!--      const leave_type = document.getElementById('leave-type').value;-->
+<!--      const start_date = document.getElementById('leave-start-date').value;-->
+<!--      const end_date = document.getElementById('leave-end-date').value;-->
+<!--      const reason_for_leave = document.getElementById('reason-for-leave').value;-->
+
+<!--      employeeData[editIndex] = {-->
+<!--        'Employee Name': employee_name,-->
+<!--        'Leave Type': leave_type,-->
+<!--        'Start Date': start_date,-->
+<!--        'End Date': end_date,-->
+<!--        'Reason for Leave': reason_for_leave-->
+<!--      };-->
+
+<!--      updateTable();-->
+<!--      clearForm();-->
+<!--      saveDataToLocalStorage();-->
+
+<!--      document.getElementById('submit-btn').style.display = 'block';-->
+<!--      document.getElementById('update-btn').style.display = 'none';-->
+<!--      editIndex = -1;-->
+<!--    }-->
+
+<!--    function clearForm() {-->
+<!--      document.getElementById('leave-form').reset();-->
+<!--    }-->
+
+<!--    function saveDataToLocalStorage() {-->
+<!--      localStorage.setItem('employeeData', JSON.stringify(employeeData));-->
+<!--    }-->
+
+<!--    function removeEntry(index) {-->
+<!--      employeeData.splice(index, 1);-->
+<!--      updateTable();-->
+<!--      saveDataToLocalStorage();-->
+<!--    }-->
+
+<!--    function editEntry(index) {-->
+<!--      const employee = employeeData[index];-->
+<!--      document.getElementById('employee-name').value = employee['Employee Name'];-->
+<!--      document.getElementById('leave-type').value = employee['Leave Type'];-->
+<!--      document.getElementById('leave-start-date').value = employee['Start Date'];-->
+<!--      document.getElementById('leave-end-date').value = employee['End Date'];-->
+<!--      document.getElementById('reason-for-leave').value = employee['Reason for Leave'];-->
+
+<!--      document.getElementById('submit-btn').style.display = 'none';-->
+<!--      document.getElementById('update-btn').style.display = 'block';-->
+
+<!--      editIndex = index;-->
+<!--    }-->
+
+<!--    function updateTable() {-->
+<!--      const tableBody = document.querySelector('#employee-table tbody');-->
+<!--      tableBody.innerHTML = '';-->
+
+<!--      employeeData.forEach((employee, index) => {-->
+<!--        const row = document.createElement('tr');-->
+<!--        row.innerHTML = `-->
+<!--          <td>${employee['Employee Name']}</td>-->
+<!--          <td>${employee['Leave Type']}</td>-->
+<!--          <td>${employee['Start Date']}</td>-->
+<!--          <td>${employee['End Date']}</td>-->
+<!--          <td>${employee['Reason for Leave']}</td>-->
+<!--          <td>-->
+<!--            <button type="button" onclick="editEntry(${index})">Edit</button>-->
+<!--            <button type="button" onclick="removeEntry(${index})">Remove</button>-->
+<!--          </td>-->
+<!--        `;-->
+<!--        tableBody.appendChild(row);-->
+<!--      });-->
+<!--    }-->
+
+<!--    function exportToExcel() {-->
+<!--      const worksheet = XLSX.utils.json_to_sheet(employeeData);-->
+<!--      const workbook = XLSX.utils.book_new();-->
+<!--      XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Applications');-->
+
+<!--      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });-->
+<!--      const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });-->
+
+<!--      saveAs(data, 'leave_applications.xlsx');-->
+<!--    }-->
+
+
+
+<!--  </script>-->
+</body>
+</html>

@@ -2,7 +2,7 @@
 WITH monthly_cohorts AS (
     SELECT
         user_id,
-        DATE_TRUNC('month', transaction_timestamp) AS cohort_month
+        DATEADD(MONTH, DATEDIFF(MONTH, 0, transaction_timestamp), 0) AS cohort_month
     FROM transactions
     GROUP BY 1, 2
 ),
@@ -20,7 +20,7 @@ retained_users AS (
     FROM monthly_cohorts m1
     JOIN monthly_cohorts m2
         ON m1.user_id = m2.user_id
-        AND m2.cohort_month = m1.cohort_month + INTERVAL '1 month'
+        AND m2.cohort_month = DATEADD(MONTH, 1, m1.cohort_month)
     GROUP BY 1
 )
 SELECT

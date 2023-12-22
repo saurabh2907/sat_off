@@ -1,17 +1,33 @@
 # sat_off
-https://zywa.notion.site/zywa/Analytics-Assignment-b9c1308e5ea8459fb8839b7a62574361
-
-[id]
-      ,[user_id]
-      ,[merchant_name]
-      ,[merchant_type]
-      ,[mcc]
-      ,[transaction_amount]
-      ,[transaction_currency]
-      ,[billing_amount]
-      ,[billing_currency]
-      ,[transaction_status]
-      ,[transaction_timestamp]
-      ,[transaction_type]
-      ,[parent_transaction_id]
-      ,[card_entry]
+WITH monthly_cohorts AS (
+    SELECT
+        user_id,
+        DATE_TRUNC('month', transaction_timestamp) AS cohort_month
+    FROM transactions
+    GROUP BY 1, 2
+),
+user_activity AS (
+    SELECT
+        cohort_month,
+        COUNT(DISTINCT user_id) AS active_users
+    FROM monthly_cohorts
+    GROUP BY 1
+),
+retained_users AS (
+    SELECT
+        m1.cohort_month,
+        COUNT(DISTINCT m2.user_id) AS retained_users
+    FROM monthly_cohorts m1
+    JOIN monthly_cohorts m2
+        ON m1.user_id = m2.user_id
+        AND m2.cohort_month = m1.cohort_month + INTERVAL '1 month'
+    GROUP BY 1
+)
+SELECT
+    cohort_month,
+    active_users,
+    retained_users,
+    ROUND(100.0 * retained_users / active_users, 2) AS retention_rate
+FROM user_activity
+JOIN retained_users USING (cohort_month)
+ORDER BY cohort_month;
